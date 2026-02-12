@@ -1,53 +1,32 @@
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ reply: "Method Not Allowed" });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: "Method not allowed" });
 
-  const { prompt } = req.body;
   const apiKey = process.env.GEMINI_API_KEY;
-
-  // Check 1: Kya Vercel ko Key mil rahi hai?
-  if (!apiKey || apiKey.trim() === "") {
-    return res.status(200).json({ 
-      reply: "⚠️ ERROR: Vercel ko GEMINI_API_KEY nahi mili. Kripya Vercel Settings mein check karein." 
-    });
-  }
+  const { prompt } = req.body;
 
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `Tum Smile Finance AI ho. Amazon ID smileai24-21 hai. User ka sawal: ${prompt}`
-          }]
-        }]
+        contents: [{ parts: [{ text: prompt }] }]
       })
     });
 
     const data = await response.json();
 
-    // Check 2: Kya Google API ne koi error bheja?
-    if (data.error) {
-      return res.status(200).json({ 
-        reply: `❌ Google API Error: ${data.error.message} (Code: ${data.error.code})` 
-      });
-    }
+    // Debugging ke liye logs mein data print hoga
+    console.log("Google API Response:", JSON.stringify(data));
 
-    // Check 3: Kya sahi jawab mila?
     if (data.candidates && data.candidates[0].content) {
-      const aiReply = data.candidates[0].content.parts[0].text;
-      return res.status(200).json({ reply: aiReply });
+      const reply = data.candidates[0].content.parts[0].text;
+      return res.status(200).json({ reply: reply });
     } else {
-      return res.status(200).json({ 
-        reply: "⚠️ AI Response Khali Hai. Shayad Safety Filters ne block kiya hai." 
-      });
+      // Agar API key galat hai ya model block hai
+      const errorMsg = data.error ? data.error.message : "Response format unexpected";
+      return res.status(200).json({ reply: "API Error: " + errorMsg });
     }
-
   } catch (error) {
-    return res.status(200).json({ 
-      reply: `🚨 Server Crash: ${error.message}` 
-    });
+    return res.status(500).json({ reply: "Server Crash: " + error.message });
   }
 }
