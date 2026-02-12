@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smile Finance AI - Official Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .chat-container { height: calc(100vh - 140px); }
+        .user-msg { border-radius: 20px 20px 0 20px; }
+        .ai-msg { border-radius: 20px 20px 20px 0; }
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col h-screen font-sans">
+
+    <header class="bg-white shadow-sm p-4 border-b-2 border-blue-600 flex justify-between items-center sticky top-0 z-10">
+        <div class="flex items-center space-x-2">
+            <div class="bg-blue-600 p-2 rounded-lg text-white">
+                <i class="fas fa-smile text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-gray-800 leading-none">Smile Finance AI</h1>
+                <p class="text-[10px] text-blue-600 font-bold uppercase tracking-widest">Smile Finance Solution</p>
+            </div>
+        </div>
+        <div class="flex space-x-3 text-gray-500">
+            <i class="fas fa-shield-alt" title="Secure API"></i>
+            <i class="fas fa-university" title="Banking Partner"></i>
+        </div>
+    </header>
+
+    <main id="chat-box" class="chat-container overflow-y-auto p-4 space-y-4">
+        <div class="ai-msg bg-white border border-gray-200 p-4 max-w-[85%] shadow-sm text-gray-800">
+            <p class="font-bold text-blue-600 mb-1">Smile Finance AI:</p>
+            Namaste! Main **Smile Finance Solution** ka official AI assistant hoon. Main Business Loans, Personal Loans aur banking services mein aapki madad kar sakta hoon. <br><br>
+            Aap mujhse koi bhi sawal pooch sakte hain ya kisi product ke baare mein jaan sakte hain.
+        </div>
+    </main>
+
+    <div id="typing" class="hidden px-4 py-2 text-xs text-gray-500 animate-pulse">
+        Smile Finance AI soch raha hai...
+    </div>
+
+    <footer class="p-3 bg-white border-t sticky bottom-0">
+        <div class="max-w-4xl mx-auto flex items-center space-x-2 bg-gray-100 rounded-full px-4 py-1 border focus-within:border-blue-500 transition-all">
+            <button onclick="alert('Image feature coming in Phase 6!')" class="text-gray-400 hover:text-blue-600 p-2">
+                <i class="fas fa-camera text-lg"></i>
+            </button>
+            <input id="user-input" type="text" placeholder="Loan ya product ke baare mein poochein..." class="flex-1 bg-transparent p-2 outline-none text-gray-700">
+            <button id="mic-btn" onclick="alert('Voice feature coming in Phase 6!')" class="text-blue-500 hover:text-blue-700 p-2">
+                <i class="fas fa-microphone text-lg"></i>
+            </button>
+            <button id="send-btn" class="text-blue-600 hover:scale-110 transition-transform p-2">
+                <i class="fas fa-paper-plane text-xl"></i>
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const typingIndicator = document.getElementById('typing');
+
+        function addMessage(sender, text) {
+            const div = document.createElement('div');
+            if (sender === "User") {
+                div.className = "user-msg bg-blue-600 text-white p-4 max-w-[85%] self-end ml-auto shadow-md";
+                div.innerHTML = `<p>${text}</p>`;
+            } else {
+                div.className = "ai-msg bg-white border border-gray-200 p-4 max-w-[85%] shadow-sm text-gray-800";
+                // Formatting AI text for links and bold
+                let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                div.innerHTML = `<p class="font-bold text-blue-600 mb-1">Smile Finance AI:</p><p>${formattedText}</p>`;
+            }
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        async function askAI(query) {
+            typingIndicator.classList.remove('hidden');
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: query })
+                });
+                const data = await response.json();
+                typingIndicator.classList.add('hidden');
+                
+                if (data.reply) {
+                    addMessage("AI", data.reply);
+                } else {
+                    addMessage("AI", "Maaf kijiye, main abhi samajh nahi pa raha hoon. Kripya dobara koshish karein.");
+                }
+            } catch (error) {
+                typingIndicator.classList.add('hidden');
+                addMessage("AI", "Server connect karne mein dikkat aa rahi hai. Kripya check karein ki API key set hai ya nahi.");
+            }
+        }
+
+        sendBtn.addEventListener('click', () => {
+            const text = userInput.value.trim();
+            if(text) {
+                addMessage("User", text);
+                userInput.value = "";
+                askAI(text);
+            }
+        });
+
+        userInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") sendBtn.click();
+        });
+    </script>
+</body>
+</html>
