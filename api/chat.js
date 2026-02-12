@@ -5,28 +5,30 @@ export default async function handler(req, res) {
   const { prompt } = req.body;
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    // URL mein humne v1beta ko badal kar v1 kar diya hai jo ki stable hai
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
+        contents: [{ 
+          parts: [{ 
+            text: `Tumhara naam Smile Finance AI hai. Tum Smile Finance Solution ke liye kaam karte ho. Tumhare paas duniya ka sara gyan hai. Amazon Affiliate ID 'smileai24-21' hai. User ka sawal: ${prompt}` 
+          }] 
+        }]
       })
     });
 
     const data = await response.json();
 
-    // Debugging ke liye logs mein data print hoga
-    console.log("Google API Response:", JSON.stringify(data));
-
     if (data.candidates && data.candidates[0].content) {
       const reply = data.candidates[0].content.parts[0].text;
       return res.status(200).json({ reply: reply });
     } else {
-      // Agar API key galat hai ya model block hai
-      const errorMsg = data.error ? data.error.message : "Response format unexpected";
-      return res.status(200).json({ reply: "API Error: " + errorMsg });
+      // Agar ab bhi error aaye toh wo detail yahan dikhegi
+      const errorMsg = data.error ? data.error.message : "Response format issue";
+      return res.status(200).json({ reply: "Google API Update: " + errorMsg });
     }
   } catch (error) {
-    return res.status(500).json({ reply: "Server Crash: " + error.message });
+    return res.status(500).json({ reply: "Server Connection Error: " + error.message });
   }
 }
